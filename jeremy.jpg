@@ -1,0 +1,208 @@
+<?php
+
+/*
+	Jeremy Dynamic Signature
+	Created by Michael Soares (mikesoares.com)
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+Header('Content-type: image/jpeg');
+Header('Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
+Header('Expires: Thu, 19 Nov 1981 08:52:00 GMT');
+Header('Pragma: no-cache');
+
+// random background
+
+$random_image = array("",
+                   "jeremy-bg1.jpg",
+                   "jeremy-bg2.jpg",
+                   "jeremy-bg3.jpg",
+                   "jeremy-bg4.jpg");
+
+srand((double)microtime()*1000000);
+$rnd = rand(1,count($random_image)-1);
+
+// create the image
+$image = imagecreatefromjpeg($random_image[$rnd]);
+
+// set the colors
+$black = imagecolorallocate($image, 0, 0, 0);
+$blue = imagecolorallocate($image, 63, 70, 88);
+$red = imagecolorallocate($image, 255, 0, 0);
+
+// get IP
+$ip = $_SERVER['REMOTE_ADDR'];
+
+// simple OS detection
+$os = $_SERVER['HTTP_USER_AGENT'];
+$oslist = Array (
+
+// Windows
+"Win|Windows",
+"Win16|Windows",
+"Win95|Windows 95",
+"Win98|Windows 98",
+"WinME|Windows ME",
+"Win32|Windows",
+"WinNT|Windows NT",
+"Windows 3.1|Windows 3.1",
+"Windows 95|Windows 95",
+"Windows CE|Windows CE",
+"Windows 98|Windows 98",
+"Windows ME|Windows ME",
+"Windows NT|Windows NT",
+"Windows NT 5.0|Windows 2000",
+"Windows NT 5.1|Windows XP",
+"Windows NT 6.0|Windows Vista",
+"Windows NT 6.1|Windows 7",
+
+// Macintosh
+"Mac_68000|Mac OS",
+"Mac_68K|Mac OS",
+"Mac_PowerPC|Mac OS",
+"Mac_PPC|Mac OS",
+"Macintosh|Mac OS",
+
+// Unixes
+"X11|UNIX",
+"BSD|BSD",
+"SunOS|SunOS",
+"IRIX|IRIX",
+"HP-UX|HP-UX",
+"AIX|AIX",
+"QNX|QNX",
+"SCO_SV|SCO UNIX",
+"FreeBSD|FreeBSD",
+"NetBSD|NetBSD",
+
+// Linux 
+"Linux|Linux",
+"Debian|Debian",
+
+// Other 
+"BeOS|BeOS",
+"OS/2|OS/2",
+"AmigaOS|AmigaOS",
+
+);
+
+$check = null;
+foreach ($oslist as $osnow) {
+$osnow = explode ("|", $osnow);
+if (eregi ($osnow[0], $os)) {
+$endos = $osnow[1];
+$check = "No";
+} elseif ($check != "No") {
+$endos = "Unknown";
+}
+}
+
+// browser type 
+   $agent = $_SERVER['HTTP_USER_AGENT'];
+   if ( strstr($agent, "MSIE 5") ) $browser = "IE 5";
+   elseif ( strstr($agent, "MSIE 4") ) $browser = "IE 4";
+   elseif ( strstr($agent, "MSIE 6") ) $browser = "IE 6";
+   elseif ( strstr($agent, "MSIE 7") ) $browser = "IE 7";
+   elseif ( strstr($agent, "MSIE 8") ) $browser = "IE 8";
+   elseif ( strstr($agent, "Firefox") ) $browser = "Firefox";
+   elseif ( strstr($agent, "Chrome") ) $browser = "Chrome";
+   elseif ( strstr($agent, "Safari") ) $browser = "Safari";
+   elseif ( strstr($agent, "Mozilla/4") ) $browser = "Netscape 4";
+   elseif ( strstr($agent, "Mozilla/5") ) $browser = "Mozilla";
+   elseif ( strstr($agent, "Mozilla/6") ) $browser = "Netscape 6";
+   elseif ( strstr($agent, "Opera") ) $browser = "Opera";
+   else $browser = "Unknown";
+
+// set the font
+$font = 'verdana.ttf';
+$size = 8;
+$color = $black;
+$color2 = $blue;
+
+// set text file
+$quotes = file('stuf.txt');
+$quote = array_rand($quotes);
+
+$joke = wordwrap($quotes[$quote], 30, "\n", 1);
+$joke = explode("\n\n", $joke);
+
+// hamachi online status
+$ch = curl_init();
+$timeout = 5; // set to zero for no timeout
+$hamachi_url = "https://my.hamachi.cc/status/text.php?5.18.204.200";
+curl_setopt ($ch, CURLOPT_URL, $hamachi_url);
+curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt ($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+$fileget = curl_exec($ch);
+curl_close($ch);
+
+if( preg_match( "/online/i", $fileget ) ) {
+	$status = imagecreatefromjpeg("online.jpg");
+}elseif( preg_match( "/offline/i", $fileget ) ) {
+	$status = imagecreatefromjpeg("offline.jpg");
+}else{
+	$status = imagecreatefromjpeg("unknown.jpg");
+}
+
+$status_x = imagesx($status);
+$status_y = imagesy($status);
+
+// put text together
+$all1 = "Jeremy sez ur n00b IP is liek";
+$all2 = "$ip and ur usin";
+if( $browser == "Unknown" ) {
+	$all3 = "$endos n stuf lolol..";
+}else{
+	$all3 = "$endos n $browser lolol..";
+}
+
+$all4 = "Your IP is $ip and you";
+if( $browser == "Unknown" ){
+	$all5 = "are using $endos as your";
+	$all6 = "super-duper operating system.";
+}else{
+	$all5 = "are using $endos as your OS";
+	$all6 = "and $browser as your browser.";
+}
+
+// put it all together
+
+// starting out with the status
+imagecopymerge($image, $status, 287, 3, 0, 0, $status_x, $status_y,100);
+
+// and the text
+if( ( $random_image[$rnd] == "jeremy-bg1.jpg" ) || ( $random_image[$rnd] == "jeremy-bg4.jpg" ) ) {
+	ImageTTFText($image, $size, 0, 8, 17, $color, $font, $all1);
+        ImageTTFText($image, $size, 0, 8, 32, $color, $font, $all2);
+        ImageTTFText($image, $size, 0, 8, 47, $color, $font, $all3);
+	for($i=0; $i<count($joke); $i++) {
+        	ImageTTFText($image, $size, 0, 8, 62, $color2, $font, $joke[$i]);
+	}
+}
+else if( ( $random_image[$rnd] == "jeremy-bg2.jpg" ) || ( $random_image[$rnd] == "jeremy-bg3.jpg" ) ) {
+	ImageTTFText($image, $size, 0, 115, 17, $color, $font, $all1);
+        ImageTTFText($image, $size, 0, 115, 32, $color, $font, $all2);
+        ImageTTFText($image, $size, 0, 115, 47, $color, $font, $all3);
+	for($i=0; $i<count($joke); $i++) {
+        	ImageTTFText($image, $size, 0, 115, 62, $color2, $font, $joke[$i]);
+	}
+}
+
+// output and destroy
+imagejpeg($image);
+imagedestroy($image);
+imagedestroy($status);
+
+?>
